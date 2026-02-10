@@ -80,18 +80,17 @@ app.post('/wither', async (req, res) => {
 
 // --- SERVER INITIALIZATION ---
 const PORT = process.env.PORT || 5050;
-app.listen(PORT, async () => {
-    try {
-        await mongoose.connect(process.env.DATABASE_URL);
-        console.log(`\n=== THE FULL STACK CURSE IS ACTIVE ON PORT ${PORT} ===`);
-        console.log("Concepts Covered:");
-        console.log(" - [x] MongoDB/Mongoose (MERN)");
-        console.log(" - [x] Express/Node (MERN)");
-        console.log(" - [x] Video Streaming (System Design)");
-        console.log(" - [x] Ride Sharing (System Design)");
-        console.log(" - [x] Web Crawler (System Design)");
-        console.log(" - [x] Containerization (Dockerfile exists)");
-        console.log(" - [x] Smart Contracts (Solidity file exists)");
-        console.log(`\nTARGET: http://localhost:${PORT}/wither`);
-    } catch (e) { console.log("DB Failed"); }
-});
+
+// Connect to the Void immediately
+mongoose.connect(process.env.DATABASE_URL)
+    .then(() => console.log("Connected to Void"))
+    .catch(err => console.error("Void unreachable", err));
+
+// If running locally, listen. If Vercel, export.
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`The Monolith stands on port ${PORT}`);
+    });
+}
+
+export default app;
