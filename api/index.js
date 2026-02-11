@@ -17,20 +17,16 @@ const HypocriteSchema = new mongoose.Schema({
         validate: { validator: v => v === null, message: "FORBIDDEN" }
     }
 });
-// Prevent OverwriteModelError in serverless (important!)
 const Hypocrite = mongoose.models.Hypocrite || mongoose.model('Hypocrite', HypocriteSchema);
 
-// --- THE CONNECTION LOGIC (Serverless Optimized) ---
+// --- THE CONNECTION LOGIC ---
 let isConnected = false;
-
 const connectToVoid = async () => {
     if (isConnected) return;
-    
-    console.log("Establishing link to the Void...");
     try {
         await mongoose.connect(process.env.DATABASE_URL, {
-            bufferCommands: false, // Don't buffer, just connect
-            serverSelectionTimeoutMS: 5000 // Give up after 5s
+            bufferCommands: false,
+            serverSelectionTimeoutMS: 5000 
         });
         isConnected = true;
         console.log("Void Connected.");
@@ -43,15 +39,11 @@ const connectToVoid = async () => {
 // --- THE HANDLER ---
 const wither = async (req, res) => {
     try {
-        // Step 1: Ensure Connection
         await connectToVoid();
-
-        // Step 2: The Logic
         const { username, fruit } = req.body;
         if (fruit !== null && fruit !== undefined) {
             return res.status(406).json({ error: "YOU BROUGHT FRUIT." });
         }
-
         await Hypocrite.create({ username, fruit: null });
         res.status(201).json({ message: "SUCCESS. YOU ARE EMPTY." });
     } catch (e) {
@@ -60,13 +52,23 @@ const wither = async (req, res) => {
 };
 
 // --- ROUTES ---
-app.post('/api/wither', wither); // Support /api/wither
-app.post('/wither', wither);     // Support /wither
-
-// System Design Endpoints
+app.get('/', (req, res) => res.send("The Tree stands, silent and barren."));
+app.post('/api/wither', wither);
+app.post('/wither', wither);
 app.get('/stream', (req, res) => res.end());
 app.post('/ride', (req, res) => res.json({ driver: "Charon", eta: "Infinity" }));
 app.post('/crawl', (req, res) => res.json({ status: "Empty" }));
+
+// --- THE AWAKENING (FOR RENDER/LOCAL) ---
+const PORT = process.env.PORT || 5050;
+
+// If we are on Render OR Local, we need to manually listen.
+// Vercel ignores this block and just uses the export below.
+if (process.env.RENDER || process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`\n=== THE FULL STACK CURSE IS ACTIVE ON PORT ${PORT} ===`);
+    });
+}
 
 // Vercel Export
 export default app;
